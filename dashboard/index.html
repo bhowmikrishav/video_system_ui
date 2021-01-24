@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=auto, initial-scale=1.0">
+    <link rel="stylesheet" href="https://getbootstrap.com/docs/4.0/dist/css/bootstrap.min.css">
+    <title>Profile</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#" style="font-family:monospace"><h4>Jovial { video_system }</h4></a>
+    </nav>
+    <main id="main">
+        <div class="container card" style="max-width:400px; margin-top:25px; text-align: center; padding: 0;">
+            <!div class="card">
+                <div class="card-header" style="font-weight: bolder;">
+                    Dashboard
+                </div>
+                <center>
+                    <img class="card-img-top" src="" id="user/pp" style="max-width: 250px;">
+                </center>
+    
+                <div class="card-body">
+                    <h5 class="card-title">Profile</h5>
+                    <p class="card-text" style="font-weight: bold;">{{name}}</p>
+                    <p class="card-text" style="color: silver;font-weight: bold;">@{{username}}</p>
+                    <a href="/dashboard/profile.html" class="card-link">update_profile</a>
+                </div>
+                <hr>
+                <div class="card-body">
+                    <h5 class="card-title">Create content</h5>
+                    <a href="/dashboard/upload.html" class="card-link">Upload Video</a>
+                </div>
+                <hr>
+                <div class="card-body">
+                    <h5 class="card-title">My Content</h5>
+                    <div class="container-fluid" style="overflow-x: scroll;">
+                        <div class="row flex-row flex-nowrap" id="my_videos">
+                            <div class="col-3" hidden>
+                                <div class="card card-block">{{video_name}}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/dashboard/my_videos.html" class="card-link">show all</a>
+                </div>
+            <!/div>        
+        </div>
+
+    </main>
+</body>
+</html>
+<script type="module">
+    import {User} from "/scripts/ums.js"
+    import {Painter} from "/scripts/painter.js"
+    import {VideoData} from '/scripts/data_server.js'
+    window.onload = () => {
+        document.getElementById('main').hidden = true
+        User.whoami().then(user=>{
+            Painter.full_html_text_replace(document.getElementById('main'), user)
+            document.getElementById('main').removeAttribute('hidden')
+            if(user.meta){
+                if (user.meta.profile_pic) {
+                    document.getElementById('user/pp').src = `http://localhost:1755/get_public_object?file_token=${user.meta.profile_pic["250x250"]}`
+                }
+            }
+        }).catch(e=>{
+            alert(e)
+        })
+        VideoData.my_video_list().then(videos=>{
+            const my_video_dom = document.getElementById('my_videos')
+            videos.forEach(video => {
+                const video_dom = document.createElement('div')
+                video_dom.classList.add('col-6')
+                const video_inner_dom = document.createElement('div')
+                video_inner_dom.innerText = video.title.substr(0,11)
+                video_dom.classList.add('card')
+                video_dom.classList.add('card-block')
+                video_dom.appendChild(video_inner_dom)
+                my_video_dom.appendChild(video_dom)
+            });
+        }).catch(e=>{
+            console.log(e);
+            alert(e)
+        })
+    }
+</script>

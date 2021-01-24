@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=auto, initial-scale=1.0">
+    <link rel="stylesheet" href="https://getbootstrap.com/docs/4.0/dist/css/bootstrap.min.css">
+    <title>Player</title>
+</head>
+<style>
+    .form-group{
+        border: 1px solid silver;
+        padding: 5px;
+        border-radius: 4px;
+    }
+</style>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#" style="font-family:monospace"><h4>Jovial { video_system }</h4></a>
+    </nav>
+    <main id="main">
+        <div class="container" style="max-width:400px; margin-top:25px">
+            <a class="btn text-white btn-lg btn-block bg-dark" href="/dashboard/">Dashboard</a>
+        </div>
+        <div id="my_videos" class="container card" style="max-width:400px; margin-top:25px">
+            <br>
+            <h3>My Videos</h3>
+            <hr>
+            <div class="form-group">
+                <h5><a target="blank" href="http://localhost:3000/video/600932b1e7984934f8bd01e6">Video Title</a></h5>
+                <table>
+                    <tr>
+                        <td>Duration</td> <td>30s</td>
+                    </tr>
+                    <tr>
+                        <td>144p</td> <td>AVAILABLE</td>
+                    </tr>
+                    <tr>
+                        <td>360p</td> <td>AVAILABLE</td>
+                    </tr>
+                    <tr>
+                        <td>720p</td> <td>AVAILABLE</td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+    </main>
+</body>
+</html>
+
+<script type="module">
+    import {VideoData} from '/scripts/data_server.js'
+    async function load_my_videos() {
+        /** @type {[{_id:string, title:string, upload_time:number, stream_manifest:{ "144": {duration:number}, "360": {duration:number}, "720": {duration:number} }, duration:number}]} */
+        const list = await VideoData.my_video_list()
+        const my_videos = document.getElementById('my_videos')
+        for(const i in list){
+            const the_video = list[i]
+            const box = document.createElement('div')
+            box.classList.add("form-group")
+            const h5 = document.createElement('h5')
+            const anchor = document.createElement('a')
+            anchor.target = 'blank'
+            anchor.href = `http://localhost:3000/video/${the_video._id}`
+            anchor.innerText = the_video.title
+            h5.appendChild(anchor)
+            box.appendChild(h5)
+            const table = `
+                <table>
+                    <tr>
+                        <td>Duration</td> <td>${the_video.duration}</td>
+                    </tr>
+                    <tr>
+                        <td>144p</td> <td>${the_video.stream_manifest[144].duration?'AVAILABLE':'PROCESSING'}</td>
+                    </tr>
+                    <tr>
+                        <td>360p</td> <td>${the_video.stream_manifest[360].duration?'AVAILABLE':'PROCESSING'}</td>
+                    </tr>
+                    <tr>
+                        <td>720p</td> <td>${the_video.stream_manifest[720].duration?'AVAILABLE':'PROCESSING'}</td>
+                    </tr>
+                </table>
+                `
+            box.innerHTML += table
+            my_videos.appendChild(box)
+        }
+    }
+    load_my_videos()
+</script>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://getbootstrap.com/docs/4.0/dist/css/bootstrap.min.css">
+    <title>Login</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#" style="font-family:monospace"><h4>Jovial { video_system }</h4></a>
+    </nav>
+    <main id="main">
+        <div class="container card" style="max-width:400px; margin-top:25px">
+            <br>
+            <h3>Login<button class="btn text-white bg-info float-right" id="login/submit1">Submit</button>
+            </h3>
+            <code id="err_msg"></code>
+            <div class="form-group">
+              <label>username</label>
+              <input class="form-control" id="login/username">
+            </div>
+            <div class="form-group">
+              <label for="exampleInputPassword1">Password</label>
+              <input class="form-control" type="password" id="login/password">
+            </div>
+            <h3><button class="btn text-white bg-info float-right" id="login/submit2">Submit</button></h3>
+        </div>
+        <div class="container" style="max-width:400px; margin-top:25px">
+            <a class="btn text-white btn-lg btn-block bg-dark" href="./register.html">Register New Account</a>
+        </div>
+    </main>
+</body>
+</html>
+<script type="module">
+    import {User} from "./scripts/ums.js"
+    document.getElementById('login/submit1').onclick = document.getElementById('login/submit2').onclick = function(){
+        document.getElementById('login/submit1').disabled = document.getElementById('login/submit2').disabled = true
+        document.getElementById('err_msg').innerText = ''
+        User.login(
+            document.getElementById('login/username').value,
+            document.getElementById('login/password').value
+        )
+        .then((res)=>{
+            if(res.error){
+                document.getElementById('login/submit1').removeAttribute('disabled')
+                document.getElementById('login/submit2').removeAttribute('disabled')
+                document.getElementById('err_msg').innerText = `${res.error} : ${res.message?res.message:''}`
+                return
+            }
+            location.href = './dashboard'
+            console.log('kk',res);
+        })
+        .catch((err)=>{
+            document.getElementById('login/submit1').removeAttribute('disabled')
+            document.getElementById('login/submit2').removeAttribute('disabled')
+            document.getElementById('err_msg').innerText = err
+            console.log(err);
+        })
+    }
+</script>

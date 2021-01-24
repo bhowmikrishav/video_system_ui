@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=auto, initial-scale=1.0">
+    <link rel="stylesheet" href="https://getbootstrap.com/docs/4.0/dist/css/bootstrap.min.css">
+    <title>Profile</title>
+</head>
+<style>
+    #main, .container{
+        background-color: black;
+        border-color: black;
+    }
+    .btn{
+        border-width: 2px; font-weight: bold;
+    }
+    .btn-outline-dark{
+        border-color: black;
+        opacity: 0.5;
+    }
+    .btn-outline-dark:hover{
+        opacity: 0.9;
+    }
+    .controls_video{
+        opacity: 0.1;
+        background-color: rgba(245, 245, 245, 0.383);
+        margin: 0;
+        width: 100%; bottom: 5px; position: absolute !important; padding: 5px;
+    }
+    .controls_video:hover{
+        background-color: rgba(245, 245, 245, 0.657);
+        opacity: 0.9;
+    }
+    .col-2{
+        text-align: left;
+    }
+    .controls_video{
+        background-color: rgba(245, 245, 245, 0.657);
+        position: fixed !important; padding: 4px; border: 0;
+        bottom: 0 !important; left: 0px !important; right: 0 !important;
+        width: 102%;
+    }
+    @media only screen and (max-width: 500px) {
+        .controls_video{opacity: 0.9;}
+        .btn{
+            zoom: 0.6;
+        }
+    }
+</style>
+<body>
+    <div id="main" style="top: 0; left: 0; right: 0; bottom: 0; width: 100%; position: fixed;">
+        <div class="container card" style="height: 100% !important; width: 100% !important; text-align: center; padding: 0;">
+            <div id="player" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;">
+                <div style="width: 100%; height: 100%;">
+                    <!video id="video" src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" style="width: 100%; height: 100%;"><!/video>
+                    <video id="video" style="width: 100%; height: 100%;"></video>
+                </div>
+                <div class="row controls_video">
+                    <div class="col-2">
+                        <center>
+                            <button id="play_btn" class="btn btn-outline-dark" style="background: url('https://cdn.svgapi.com/vector/104010/play.svg');background-repeat: no-repeat; background-position: center; padding-left: 0; background-size: cover; color: rgba(0, 0, 0, 0);">
+                                Play
+                            </button>
+                        </center>
+                    </div>
+                    <div class="col-6">
+                        <input id="video_progress_bar" class="progress-bar" style="min-width: 100%; margin-left: 10px; height: 100%;" type="range" value="0" max="15">
+                    </div>
+                    <div class="col-2">
+                        <center>
+                            <select class="btn btn-outline-dark" id="resolution">
+                                <option value="720">720p</option>
+                                <option value="360">360p</option>
+                                <option value="144">144p</option>
+                            </select>
+                        </center>
+                    </div>
+                    <div class="col-2">
+                        <button id="full_screen_btn" class="btn btn-outline-dark" style="margin-right: 10px;background: url('https://cdn.svgapi.com/vector/16942/screen.svg');background-repeat: no-repeat; background-position: center; padding-left: 0; background-size: contain; color: rgba(0, 0, 0, 0);">
+                            Full
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <nav class="navbar">
+        <a class="navbar-brand text-warning" href="#" style="font-family:monospace"><h4>Jovial { video_system }</h4></a>
+    </nav>
+</body>
+</html>
+<script type="module">
+    import {VideoData} from "/scripts/data_server.js"
+    /** @type {[{byte_length: number, end_time: number, height: number, object_id: string, start_time: 0, width: 1280, object_token: string, loaded:boolean}]} */
+    var time_line = null
+    /** @type { SourceBuffer } */
+    var sourceBuffer
+    /** @type {true|false} */
+    var loader_idle = true
+    var player_state = {
+        player: document.getElementById('player'),
+        video:document.getElementById('video'),
+        play_btn:document.getElementById('play_btn'),
+        playing: false,
+        full_screen: false,
+        video_progress: 0,
+        video_progress_bar: document.getElementById('video_progress_bar'),
+        resolution: document.getElementById('resolution'),
+        video_id: location.href.replace(/^.*video\//, '').replace(/\/.*/, ''),
+        manifest: null
+    }
+    player_state.play_btn.onclick = ()=>{
+        if(player_state.playing) {player_state.video.pause(); player_state.playing = false}
+        else {player_state.video.play(); player_state.playing = true}
+    }
+    player_state.video.ontimeupdate = async ()=>{
+        player_state.video_progress = player_state.video.currentTime
+        player_state.video_progress_bar.value = player_state.video_progress
+        load_next()
+    }
+    player_state.video_progress_bar.onchange = player_state.video_progress_bar.oninput = ()=>{
+        const v = player_state.video_progress_bar.value
+        console.log(v);
+        player_state.video.pause()
+        player_state.video.currentTime = v
+        load_next()
+        .then(_=>{
+            if(player_state.playing) player_state.video.play()
+        })
+        .catch(e=>{
+            alert(e)
+        })
+    }
+    player_state.resolution.oninput = ()=>{
+        const resolution = player_state.resolution.value
+        time_line = player_state.manifest.stream_manifest[resolution].chunks||player_state.manifest.stream_manifest["720"].chunks||player_state.manifest.stream_manifest["360"].chunks||player_state.manifest.stream_manifest["144"].chunks
+        time_line = time_line.map(c=>{
+            c.loaded = false
+            return c
+        })
+    }
+    document.getElementById('full_screen_btn').onclick = (e)=>{
+        if(player_state.full_screen){
+            player_state.full_screen = false
+            if(document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if(document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if(document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }else{
+            player_state.full_screen = true
+            if (player_state.player.requestFullscreen) {
+                player_state.player.requestFullscreen();
+            } else if (player_state.player.webkitRequestFullscreen) { /* Safari */
+                player_state.player.webkitRequestFullscreen();
+            } else if (player_state.player.msRequestFullscreen) { /* IE11 */
+                player_state.player.msRequestFullscreen();
+            }
+        }
+    }
+    
+    load_time_line()
+    async function load_time_line() {
+        player_state.manifest = await VideoData.get_manifest(player_state.video_id)
+        time_line = player_state.manifest.stream_manifest[player_state.resolution.value].chunks||player_state.manifest.stream_manifest["720"].chunks||player_state.manifest.stream_manifest["360"].chunks||player_state.manifest.stream_manifest["144"].chunks
+        time_line = time_line.map(c=>{
+            c.loaded = false
+            return c
+        })
+        video_progress_bar.max = time_line[time_line.length-1].end_time
+        console.table(time_line)
+        var mimeCodec = 'video/webm;codecs="vp9,opus"'
+        /**@type{MediaSource}*/
+        var mediaSource = new MediaSource()
+        player_state.video.src = window.URL.createObjectURL(mediaSource)
+        //mediaSource.duration = time_line[time_line.length-1].end_time
+        mediaSource.addEventListener('sourceopen', async () => {
+            sourceBuffer = mediaSource.addSourceBuffer(mimeCodec)
+            sourceBuffer.mode = 'segment';
+            sourceBuffer.appendBuffer(
+                new Uint8Array(await VideoData.get_public_object(time_line[0].object_token))
+            )
+            sourceBuffer.appendBuffer(
+                new Uint8Array(await VideoData.get_public_object(time_line[time_line.length-1].object_token))
+            )
+            time_line[0].loaded = true
+            player_state.video.play()
+        })
+    }
+    /**
+     * @type {function():{Promise<>}}
+    */
+    function load_next(){
+        //load next nearest absent chunk
+        return new Promise(async (resolve, reject)=>{
+            if(loader_idle){
+            loader_idle = false
+                //find nearest absent chunk
+                var nearest_chunk = null
+                for(const i in time_line){
+                    if((!time_line[i].loaded) && (time_line[i].end_time >= player_state.video_progress) ){
+                        try {
+                            sourceBuffer.appendBuffer(
+                                new Uint8Array(
+                                    await VideoData.get_public_object(time_line[i].object_token)
+                                )
+                            )
+                            time_line[i].loaded = true
+                        } catch (e) {
+                            time_line[i].loaded = false
+                        }
+                        break
+                    }
+                }
+                loader_idle = true
+            }
+            console.table(time_line)
+            resolve()
+        })
+    }
+</script>

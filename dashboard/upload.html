@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=auto, initial-scale=1.0">
+    <link rel="stylesheet" href="https://getbootstrap.com/docs/4.0/dist/css/bootstrap.min.css">
+    <title>Profile</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#" style="font-family:monospace"><h2>Jovial { video_system }</h2></a>
+    </nav>
+    <main id="main">
+        <div class="container" style="max-width:400px; margin-top:25px">
+            <a class="btn text-white btn-lg btn-block bg-dark" href="/dashboard/">Dashboard</a>
+        </div>
+        <div class="container card" style="max-width:400px; margin-top:25px;">
+            <br>
+            <h3>Upload Video<button class="btn text-white bg-info float-right" onclick="">Upload</button>
+            </h3>
+            <code id="err_msg"></code>
+            <div class="form-group">
+              <label>Title</label>
+              <input class="form-control" id="upload/title">
+            </div>
+            <div class="form-group">
+                <label>Video</label>
+                <label id="upload/video_file_dropzone" class="form-control align-bottom" style="text-align: center; min-height: 100px; border: rgb(170, 167, 164) solid 2px;">
+                    Drop video file here {max_size : 6GB}
+                    <input placeholder="drop image file here" style="min-height: 100px; opacity: 0;" type='file' id="upload/video_file">
+                </label>
+            </div>
+            <h3><button class="btn text-white bg-info float-right" onclick="">Upload</button></h3>
+        </div>
+    </main>
+</body>
+</html>
+<script src="/scripts/buffer.js"></script>
+<script src="/scripts/bson.js"></script>
+<script>
+    //const ws = new WebSocket('ws://localhost:1755/ws/video_file_upload')
+    const bson = new BSON()
+    //ws.onopen = function (ev) {
+        //console.log(ev);
+        //ws.send(bson.serialize({type:'authorize', data:{user_id:'12345'}}))
+        //ws.send(bson.serialize({type:'buffer', data: BSON.Binary(buffer.Buffer.from('hello')) }))
+    //}
+</script>
+<script type="module">
+    import {FileStore} from "/scripts/upload.js"
+    document.getElementById('upload/video_file').oninput = function () {
+        const file = document.getElementById('upload/video_file').files[0]
+        FileStore.upload_video(file)
+        .then((res)=>{
+            document.getElementById('upload/video_file_dropzone').childNodes[0].data = res.msg
+        })
+        .catch(()=>{
+            console.log('bad');
+        })
+    }
+</script>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=auto, initial-scale=1.0">
+    <link rel="stylesheet" href="https://getbootstrap.com/docs/4.0/dist/css/bootstrap.min.css">
+    <title>Profile</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#" style="font-family:monospace"><h4>Jovial { video_system }</h4></a>
+    </nav>
+    <main id="main">
+        <div class="container" style="max-width:400px; margin-top:25px">
+            <a class="btn text-white btn-lg btn-block bg-dark" href="/dashboard/">Dashboard</a>
+        </div>
+        <div class="container card" style="max-width:400px; margin-top:25px">
+            <br>
+            <h3>Profile<button class="btn text-white bg-info float-right" id="profile/save1">Save</button>
+            </h3>
+            <code id="err_msg"></code>
+            <div class="form-group">
+              <label>Name</label>
+              <input class="form-control" id="user/name">
+            </div>
+            <div class="form-group" id="pp/upload/box">
+                <label>Profile Pic</label>
+                <label id='input/file_name' class="form-control align-bottom" style="text-align: center; min-height: 100px; border: rgb(170, 167, 164) solid 2px;">
+                    {{file_name}}
+                    <input placeholder="drop image file here" style="min-height: 100px; opacity: 0;" type='file' id="user/pp">
+                </label>
+            </div>
+            <h3><button class="btn text-white bg-info float-right" id="profile/save2">Save</button></h3>
+        </div>
+        <div class="container card" style="max-width:400px; margin-top:25px; border: red solid 2px !important;">
+            <br>
+            <h3>Reset Password<button class="btn text-white bg-info float-right" onclick="">Reset</button>
+            </h3>
+            <code id="err_msg"></code>
+            <div class="form-group">
+              <label>Password</label>
+              <input class="form-control" id="reset/password">
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input class="form-control" id="reset/newpassword">
+            </div>
+            <div class="form-group">
+                <label>Confirm New Password (ReType New Password)</label>
+                <input class="form-control" id="reset/renewpassword">
+            </div>
+            <h3><button class="btn text-white bg-info float-right" onclick="">Reset</button></h3>
+        </div>
+    </main>
+</body>
+</html>
+<script type="module">
+    import {User} from "/scripts/ums.js"
+    import {Painter} from "/scripts/painter.js"
+    import {FileStore} from "/scripts/upload.js"
+    window.onload = async () => {
+        document.getElementById('main').hidden = true
+        const user = await User.whoami()
+        document.getElementById('user/name').placeholder = user?user.name:''
+        //document.getElementById('user/username').value = user?user.username:''
+        Painter.full_html_text_replace(document.getElementById('pp/upload/box'), {"file_name":"Drop image file here {max_size : 16MB}"})
+        document.getElementById('main').removeAttribute('hidden')
+    }
+    document.getElementById('user/pp').oninput = function(){
+        if(document.getElementById('user/pp').files.length)
+            document.getElementById('input/file_name').childNodes[0].data = document.getElementById('user/pp').files[0].name
+    }
+    document.getElementById('profile/save1').onclick = document.getElementById('profile/save2').onclick = async ()=>{
+        document.getElementById('profile/save1').disabled = document.getElementById('profile/save2').disabled = true
+        if(document.getElementById('user/name').value.length){
+            var updates = Object.assign(
+                document.getElementById('user/name').value.length? { name: document.getElementById('user/name').value}: null
+            )
+            const result = await User.update_user(updates)
+            console.log(result);
+        }
+        if(document.getElementById('user/pp').files.length){
+            const reader = new FileReader();
+            const blob = await new Promise((resolve, reject)=>{
+                try{
+                    reader.readAsArrayBuffer(document.getElementById('user/pp').files[0])
+                    reader.onload = function (e){
+                        resolve(new Blob([e.target.result]))
+                    }
+                    reader.onerror = function(e){reject(e)}
+                }catch(e){
+                    reject(e)
+                }
+            })
+            FileStore.upload_profile_photo(blob)
+        }
+        document.getElementById('profile/save1').removeAttribute('disabled')
+        document.getElementById('profile/save2').removeAttribute('disabled')
+    }
+</script>

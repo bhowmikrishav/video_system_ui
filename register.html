@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-signin-client_id" content="474999325024-g87fgc49vi70oifr99da7e068ig8elrd.apps.googleusercontent.com">
+    <link rel="stylesheet" href="https://getbootstrap.com/docs/4.0/dist/css/bootstrap.min.css">
+    <title>Register</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#" style="font-family:monospace"><h4>Jovial { video_system }</h4></a>
+        <a href="#" onclick="signOut();">Sign out</a>
+    </nav>
+    <main id="main">
+        <div class="container card" style="max-width:400px; margin-top:25px">
+            <br>
+            <h3>Register<button class="btn text-white bg-info float-right"  id="login/submit1">Submit</button>
+            </h3>
+            <code id="err_msg"></code>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input class="form-control" id="login/name">
+            </div>
+            <div class="form-group">
+              <label>username</label>
+              <input class="form-control" id="login/username">
+            </div>
+            <div class="form-group">
+              <label for="exampleInputPassword1">Password</label>
+              <input class="form-control" type="password" id="login/password">
+            </div>
+            <div class="form-group">
+              <label for="exampleInputPassword1">Retype-Password</label>
+              <input class="form-control" type="password" id="login/repassword">
+            </div>
+            <h3>
+                <span class="g-signin2" data-onsuccess="onSignIn"></span>
+                <button class="btn text-white bg-info float-right"  id="login/submit2">Submit</button>
+            </h3>
+        </div>
+        <div class="container" style="max-width:400px; margin-top:25px">
+            <a class="btn text-white btn-lg btn-block bg-dark" href="./login.html">Login with Username</a>
+        </div>
+    </main>
+</body>
+</html>
+<script type="module">
+    import {User} from "./scripts/ums.js"
+    document.getElementById('login/submit1').onclick = document.getElementById('login/submit2').onclick = function(){
+        document.getElementById('login/submit1').disabled = document.getElementById('login/submit2').disabled = true
+        document.getElementById('err_msg').innerText = ''
+        User.register(
+            document.getElementById('login/name').value,
+            document.getElementById('login/username').value,
+            document.getElementById('login/password').value,
+            document.getElementById('login/repassword').value,
+        )
+        .then((res)=>{
+            if(res.error){
+                document.getElementById('login/submit1').removeAttribute('disabled')
+                document.getElementById('login/submit2').removeAttribute('disabled')
+                document.getElementById('err_msg').innerText = `${res.error} : ${res.message?res.message:''}`
+                return
+            }
+            console.log('kk',res);
+        })
+        .catch((err)=>{
+            document.getElementById('login/submit1').removeAttribute('disabled')
+            document.getElementById('login/submit2').removeAttribute('disabled')
+            document.getElementById('err_msg').innerText = err
+            console.log(err);
+        })
+    }
+</script>
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+<script>
+    //init()
+    function init() {
+        gapi.load('auth2', function() {
+            console.log("Intiated");
+            /* Ready. Make a call to gapi.auth2.init or some other API */
+        });
+    }
+    function onSignIn(googleUser) {
+        var profile = googleUser.getBasicProfile();
+        console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+        console.log('Name: ' + profile.getName());
+        console.log('Image URL: ' + profile.getImageUrl());
+        console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+    }
+    function signOut() {
+        var auth2 = gapi.auth2.getAuthInstance();
+        auth2.signOut().then(function () {
+        console.log('User signed out.');
+        });
+    }
+</script>
